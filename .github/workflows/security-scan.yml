@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         # FIXED: Pinned mutable master branch pointer to explicit commit SHA
-        uses: aquasecurity/trivy-action@6e57b68945da7e11c590fcbe260a92f03f718fb4 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           image-ref: 'test-app:latest'
           format: 'table'
