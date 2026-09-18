@@ -1,7 +1,7 @@
 FROM node:24 AS installer
 # COPY . /juice-shop
 WORKDIR /juice-shop
-COPY . .
+COPY juice-shop-master/ .
 
 RUN npm install -g typescript@^6.0.3
 RUN npm install --omit=dev
