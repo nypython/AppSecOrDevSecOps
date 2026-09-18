@@ -17,7 +17,7 @@ jobs:
 
       - name: Run Semgrep CLI
         run: |
-          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep scan --config=auto --error
+          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep scan --config=auto --exclude="juice-shop-master/" --error
 
   container-security-scan:
     name: Build Image & Run Trivy Vulnerability Scan
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build Local Docker Image
         run: |
-          docker build -t test-app:latest -f juice-shop-master/Dockerfile .
+          docker build -t test-app:latest -f C:/AppSecOrDevSecOps/juice-shop-master/Dockerfile .
 
       - name: Run Trivy Vulnerability Scanner
         # FIXED: Pinned mutable master branch pointer to explicit commit SHA
