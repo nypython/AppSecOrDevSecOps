@@ -29,7 +29,7 @@ jobs:
 
       - name: Build Local Docker Image
         run: |
-          docker build -t test-app:latest -f juice-shop-master/Dockerfile .
+          docker build -t test-app:latest juice-shop-master .
 
       - name: Run Trivy Vulnerability Scanner
         # FIXED: Pinned mutable master branch pointer to explicit commit SHA
