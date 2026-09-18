@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
+        # FIXED: Pinned mutable v4 tag to explicit commit SHA
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
 
       - name: Run Semgrep CLI
@@ -23,13 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        # FIXED: Pinned mutable v4 tag to explicit commit SHA
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
 
       - name: Build Local Docker Image
         run: |
           docker build -t test-app:latest .
 
       - name: Run Trivy Vulnerability Scanner
+        # FIXED: Pinned mutable master branch pointer to explicit commit SHA
         uses: aquasecurity/trivy-action@6e57b68945da7e11c590fcbe260a92f03f718fb4 # master
         with:
           image-ref: 'test-app:latest'
