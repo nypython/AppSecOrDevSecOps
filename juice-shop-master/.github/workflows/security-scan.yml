@@ -1,0 +1,38 @@
+name: DevSecOps Automated Security Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  static-code-analysis:
+    name: Run Semgrep Source Code Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep CLI
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep scan --config=auto --error
+
+  container-security-scan:
+    name: Build Image & Run Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Local Docker Image
+        run: |
+          docker build -t test-app:latest .
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'test-app:latest'
+          format: 'table'
+          exit-code: '0' # Keeps the pipeline from breaking completely so you can read the report
+          severity: 'CRITICAL,HIGH'
