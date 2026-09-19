@@ -37,5 +37,5 @@ jobs:
         with:
           image-ref: 'test-app:latest'
           format: 'table'
-          exit-code: '0' # Keeps the pipeline from breaking completely so you can read the report
+          exit-code: '1' # Keeps the pipeline from breaking completely so you can read the report
           severity: 'CRITICAL,HIGH'
