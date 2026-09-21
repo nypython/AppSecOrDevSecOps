@@ -20,7 +20,7 @@ jobs:
         run: |
           docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep \
             semgrep scan \
-            --config=p/owasp-top-10 \
+            --config=p/owasp-top-ten \
             --config=p/javascript \
             --exclude=".github/" \
             --error
