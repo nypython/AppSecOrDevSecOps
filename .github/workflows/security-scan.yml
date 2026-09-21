@@ -16,9 +16,9 @@ jobs:
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
 
       - name: Run Semgrep CLI
+        # REMOVED the --exclude flag so Semgrep looks inside the juice-shop folder
         run: |
-          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep scan --config=auto --exclude="juice-shop-master/" --error
-
+          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep scan --config=auto --error
   container-security-scan:
     name: Build Image & Run Trivy Vulnerability Scan
     runs-on: ubuntu-latest
