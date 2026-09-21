@@ -185,7 +185,8 @@ jobs:
         with:
           name: api-test-lcov
       - name: "Publish coverage to Coveralls"
-        uses: coverallsapp/github-action@v2
+        # FIXED: Pinned mutable v2.3.8 tag to explicit commit SHA
+        uses: coverallsapp/github-action@8d6379eacbc2cbda0dfcb89c7d41a7df75db3582 # v2.3.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           files: frontend-lcov.info server-lcov.info api-lcov.info
@@ -356,7 +357,15 @@ jobs:
       - name: "Check out Git repository"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
       - name: "Install Heroku CLI"
-        run: curl https://cli-assets.heroku.com/install.sh | sh
+        # FIXED: Download and Run Heroku CLI install script from official source instead of using deprecated Heroku GitHub Action
+        run: |
+          curl -fsSL https://heroku.com -o heroku-install.sh
+          if [ -s heroku-install.sh ]; then
+            sh heroku-install.sh
+            rm heroku-install.sh
+          else
+            echo "Downloaded installer is empty" && exit 1
+          fi
       - name: "Set Heroku app & branch for ${{ github.ref }}"
         run: |
           if [ "$GITHUB_REF" == "refs/heads/master" ]; then
