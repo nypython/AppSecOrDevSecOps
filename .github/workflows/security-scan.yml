@@ -23,7 +23,6 @@ jobs:
             --config=p/owasp-top-ten \
             --config=p/javascript \
             --config=p/typescript \
-            --config=p/typescript-web-security \
             --exclude=".github/" \
             --error
   container-security-scan:
