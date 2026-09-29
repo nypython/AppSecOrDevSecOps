@@ -49,6 +49,13 @@ export const cutOffPoisonNullByte = (str: string) => {
   return str
 }
 
+// Pulling the signing credential from an external environment runtime container layer
+const privateKey = process.env.JWT_PRIVATE_KEY;
+
+if (!privateKey) {
+  throw new Error("FATAL: JWT_PRIVATE_KEY environment variable is missing!");
+}
+
 export const isAuthorized = () => expressJwt(({ secret: publicKey }) as any)
 export const denyAll = () => expressJwt({ secret: '' + Math.random() } as any)
 export const authorize = (user = {}) => jwt.sign(user, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
