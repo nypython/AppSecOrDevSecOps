@@ -37,10 +37,9 @@ jobs:
 
       - name: Run TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
+        # FIX: Swapped out base/head parameters for a complete filesystem root audit
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --debug --only-verified
   container-security-scan:
     name: Build Image & Run Trivy Vulnerability Scan
