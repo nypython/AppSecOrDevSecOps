@@ -6,8 +6,17 @@ COPY . .
 
 RUN npm install -g typescript@^6.0.3
 # RUN npm install --omit=dev
-# 1. FIX: Install ALL dependencies first so the build tools are present
-RUN npm install
+
+# 1. FIX: Install packages while explicitly blocking automated postinstall scripts
+RUN npm install --ignore-scripts
+
+# 2. FIX: Manually compile the frontend and server assets in the correct order
+RUN npm run build:frontend --workspace=frontend
+RUN npm run build:server || true
+
+# 3. FIX: Generate the SBOM now that the assets exist
+RUN npm run sbom
+
 
 # 2. FIX: Prune development tools ONLY after the post-install scripts complete
 RUN npm prune --production
