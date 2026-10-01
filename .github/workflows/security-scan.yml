@@ -51,8 +51,9 @@ jobs:
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
 
       - name: Build Local Docker Image
+      # FIX: Point the build context straight to the juice-shop-master folder
         run: |
-          docker build -t test-app:latest -f juice-shop-master/Dockerfile .
+          docker build -t test-app:latest juice-shop-master
 
       - name: Run Trivy Vulnerability Scanner
         # FIXED: Pinned mutable master branch pointer to explicit commit SHA
