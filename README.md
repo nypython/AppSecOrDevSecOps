@@ -51,6 +51,33 @@ The workflow file `.github/workflows/security-scan.yml` is split into three conc
   if (!privateKey) throw new Error("FATAL: JWT_PRIVATE_KEY missing!");
   ```
 
+### Case Study 4: Sensitive Information Disclosure via Directory Listing
+* **Vulnerability Identifier:** `express-check-directory-listing` (BLOCKING)
+* **The Flaw:** Located inside `juice-shop-master/server.ts`. The application backend misconfigured its static file-serving modules by passing raw internal folders directly into the `serveIndex` middleware. This forced the Express engine to dynamically generate a clickable, interactive HTML directory tree index whenever a user queried endpoints like `/ftp` or `/support/logs`.
+* **Red Team Impact:** Extreme reconnaissance advantage. A malicious operator can navigate directly to `https://target-app.com` or `/support/logs` to map out the application's layout. This lets them discover and exfiltrate forgotten sensitive database backups (e.g., SQLite files), application blueprints (`package-lock.json`), or active server runtime logs containing sensitive environment vectors or live session tokens.
+* **Blue Team Remediation:** Completely removed the broad `serveIndex` middleware handlers for internal paths. For file requirements that actually must remain accessible to the public, the architecture was refactored to serve explicit file assets individually via static paths rather than exposing entire parent directories:
+  ```typescript
+  // ❌ DEPRECATED AND REMOVED: Exposed full tree structure
+  // app.use('/ftp', serveIndexMiddleware, serveIndex('ftp', { icons: true }))
+
+  // ✅ SECURED: Exposes the specific legal file only; blocks folder indexing
+  app.use('/ftp/legal.md', express.static('ftp/legal.md'));
+  ```
+
+### Case Study 5: Broken Transport Layer Security (Insecure TLS Protocol Support)
+* **Vulnerability Identifier:** `javascript.express.security.audit` / Weak Cipher Configuration
+* **The Flaw:** The network service wrapper initialized its HTTPS server instance utilizing a legacy configuration block (`secureProtocol: 'TLSv1_method'`). This parameter allowed the system to accept connection negotiations from deprecated cryptography baselines including TLS 1.0 and TLS 1.1.
+* **Red Team Impact:** Facilitates Man-In-The-Middle (MITM) attacks. An attacker positioned on the same network layer can execute a protocol downgrade attack (e.g., forcing connection paths down to TLS 1.0). Due to mathematical flaws in legacy ciphers (such as POODLE or BEAST vectors), the attacker can decrypt the intercepted traffic streams, reading plaintext session cookies, payloads, and parameters in real time.
+* **Blue Team Remediation:** Stripped out the obsolete `secureProtocol` parameters and enforced strict, modern protocol constraints requiring a minimum connection standard of TLS 1.2 or 1.3:
+  ```typescript
+  const server = https.createServer({
+    key: privateKey,
+    cert: certificate,
+    // ✅ SECURED: Hardens transport boundary; explicitly drops legacy protocols
+    minVersion: 'TLSv1.2'
+  }, app);
+  ```
+
 ---
 
 ## 🛠️ Skills Demonstrated
