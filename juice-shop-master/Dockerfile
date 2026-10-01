@@ -7,15 +7,17 @@ COPY . .
 RUN npm install -g typescript@^6.0.3
 # RUN npm install --omit=dev
 
-# 1. Install root dependencies without triggering the broken postinstall hook
-RUN npm install --ignore-scripts
+# 1. FIX: Freeze postinstall race-conditions by ignoring package hooks
+RUN npm install --ignore-scripts --no-audit
 
-# 2. FIX: Manually navigate and compile the frontend components in their native directory
-RUN cd frontend && npm install && npm run build -- --output-metafile
+# 2. FIX: Build the Angular app layout manually to generate the tracking stats file
+RUN cd frontend && npm install --ignore-scripts && ./node_modules/.bin/ng build --stats-json
+
+# 3. FIX: Move back to root and execute the server asset generation blocks
 RUN cd ..
-
-# 3. Compile server assets and build the SBOM
 RUN npm run build:server || true
+
+# 4. FIX: Safely generate the SBOM structure now that stats.json is present on disk
 RUN npm run sbom
 
 
