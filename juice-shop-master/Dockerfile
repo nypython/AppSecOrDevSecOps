@@ -4,7 +4,13 @@ WORKDIR /juice-shop
 COPY juice-shop-master/ .
 
 RUN npm install -g typescript@^6.0.3
-RUN npm install --omit=dev
+# RUN npm install --omit=dev
+# 1. FIX: Install ALL dependencies first so the build tools are present
+RUN npm install
+
+# 2. FIX: Prune development tools ONLY after the post-install scripts complete
+RUN npm prune --production
+
 RUN npm dedupe --omit=dev
 RUN rm -rf frontend/node_modules
 RUN rm -rf frontend/.angular
