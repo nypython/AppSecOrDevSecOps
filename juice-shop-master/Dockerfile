@@ -7,14 +7,15 @@ COPY . .
 RUN npm install -g typescript@^6.0.3
 # RUN npm install --omit=dev
 
-# 1. FIX: Install packages while explicitly blocking automated postinstall scripts
+# 1. Install root dependencies without triggering the broken postinstall hook
 RUN npm install --ignore-scripts
 
-# 2. FIX: Manually compile the frontend and server assets in the correct order
-RUN npm run build:frontend --workspace=frontend
-RUN npm run build:server || true
+# 2. FIX: Manually navigate and compile the frontend components in their native directory
+RUN cd frontend && npm install && npm run build -- --output-metafile
+RUN cd ..
 
-# 3. FIX: Generate the SBOM now that the assets exist
+# 3. Compile server assets and build the SBOM
+RUN npm run build:server || true
 RUN npm run sbom
 
 
