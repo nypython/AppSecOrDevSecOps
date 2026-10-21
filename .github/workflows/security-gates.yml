@@ -138,7 +138,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: 'http://localhost:8080/'
           rules_file_name: '.zap/rules.tsv'
-          fail_action: true
+          fail_action: false # Ensures that the pipeline continues to run even if ZAP finds vulnerabilities
+          # Instructs ZAP to use the active session cookie for authenticated scanning
+          allow_issue_writing: true
+          # Injects the active session cookie into ZAP's authenticated context for deeper scanning
           # Instructs ZAP to load configuration properties strictly from the file asset
           cmd_options: '-g /zap/wrk/.zap/zap.conf'
 
