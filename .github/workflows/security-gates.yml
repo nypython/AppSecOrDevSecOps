@@ -1,0 +1,140 @@
+name: "DVWA Comprehensive Enterprise Security Gates"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 1' # Runs automatically every Monday at midnight to flag new CVEs
+
+permissions:
+  contents: read
+  security-events: write # Mandatory permission to ingest SARIF results into GitHub ASPM (Security Tab)
+  actions: read
+
+jobs:
+  # =========================================================================
+  # GATE 1: STATIC APPLICATION SECURITY TESTING (SAST)
+  # =========================================================================
+  static-code-analysis:
+    name: Run Semgrep Code Scan (PHP Architecture)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        # HARDENED: Pinned mutable v4 tag to explicit commit SHA to secure the pipeline
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+
+      - name: Run Semgrep OSS Scan
+        # Configured with p/php explicitly targeting DVWA's backend software stack
+        run: |
+          pip install semgrep
+          semgrep scan --config=p/owasp-top-ten --config=p/php --sarif --output=semgrep-results.sarif
+
+      - name: Upload SAST results to GitHub ASPM
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() # Ensures vulnerability findings are uploaded even if errors occur
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+  # =========================================================================
+  # GATE 2: SECRET SCANNING
+  # =========================================================================
+  secrets-scanning:
+    name: Run TruffleHog Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+        with:
+          fetch-depth: 0 # Crucial: Pulls full commit history to audit legacy files for exposed credentials
+
+      - name: Run TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          extra_args: --debug --only-verified
+
+  # =========================================================================
+  # GATE 3: SOFTWARE COMPOSITION ANALYSIS (SCA)
+  # =========================================================================
+  container-security-scan:
+    name: Run Trivy Infrastructure Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          # Directly targets the deployment engine base container
+          image-ref: 'vulnerables/web-dvwa:latest'
+          format: 'sarif' # Generates normalized data structure instead of stdout text tables
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0' # Logs anomalies on the dashboard without crashing compiling runs prematurely
+
+      - name: Upload SCA results to GitHub ASPM
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+  # =========================================================================
+  # GATE 4: DYNAMIC APPLICATION SECURITY TESTING (DAST) WITH AUTHENTICATION
+  # =========================================================================
+  dast-scan:
+    name: Run Authenticated OWASP ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    # Waits for static compile-time gates to clear before using runner time on live staging servers
+    needs: [static-code-analysis, secrets-scanning, container-security-scan] 
+    
+    services:
+      # Instantiates DVWA as a live background runner service
+      dvwa:
+        image: vulnerables/web-dvwa
+        ports:
+          - 8080:80
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+
+      - name: Verify Target App Status
+        run: |
+          until curl -s http://localhost:8080/login.php | grep -q "Login"; do
+            echo "Waiting for DVWA runtime environment to initialize database schemas..."
+            sleep 5
+          done
+
+      - name: Authenticate into DVWA & Extract Active Session Cookies
+        id: dvwa_auth
+        run: |
+          echo "[*] Triggering headless handshake..."
+          # 1. Establish initial cookie tracking context
+          curl -s -c cookies.txt "http://localhost:8080/login.php"
+          
+          # 2. Programmatically log in using admin credentials
+          curl -s -b cookies.txt -c cookies.txt -d "username=admin&password=password&Login=Login" "http://localhost:8080/login.php" > /dev/null
+          
+          # 3. Configure application state context to LOW security level for discovery depth
+          curl -s -b cookies.txt -c cookies.txt "http://localhost:8080/security.php" > /dev/null
+          
+          # 4. Extract token from cookie storage file
+          PHPSESSID=$(grep "PHPSESSID" cookies.txt | awk '{print $7}')
+          
+          echo "[+] Active session captured successfully."
+          echo "::add-mask::$PHPSESSID" # Masks value in raw GitHub Action logs for token hygiene
+          
+          # 5. Export session variables into the runner global environment configuration matrix
+          echo "PHPSESSID=$PHPSESSID" >> $GITHUB_ENV
+
+      - name: Run OWASP ZAP Baseline Scan (Authenticated Proxy Mode)
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: 'http://localhost:8080/'
+          rules_file_name: '.zap/rules.tsv'
+          fail_action: true # Enforces gate by blocking pull requests if severe active vulnerabilities are encountered
+          # Command options instruct ZAP spidering engines to append credentials to every automated payload request
+          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low" -config spider.excludePattern=.*/logout\\.php.*'
