@@ -136,6 +136,8 @@ jobs:
           target: 'http://localhost:8080/'
           rules_file_name: '.zap/rules.tsv'
           fail_action: true # Enforces gate by blocking pull requests if severe active vulnerabilities are encountered
-          # Uses duplicate -z flags to bypass the command-line parser bug with the -config flag
-          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low" -z "spider.excludePattern=.*/logout\.php.*"'
+          # Configuration file explicitly handles the spider exclusion pattern
+          config_file_name: '.zap/zap.conf'
+          # Command options now strictly handles the authentication cookie injection safely
+          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low"'
 
