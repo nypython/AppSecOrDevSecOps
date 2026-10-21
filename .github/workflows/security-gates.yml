@@ -129,15 +129,17 @@ jobs:
           # 5. Export session variables into the runner global environment configuration matrix
           echo "PHPSESSID=$PHPSESSID" >> $GITHUB_ENV
 
+      - name: Fix Workspace Permissions for ZAP Docker
+        run: chmod -R 777 .
+
       - name: Run OWASP ZAP Baseline Scan (Authenticated Proxy Mode)
         uses: zaproxy/action-baseline@v0.12.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: 'http://localhost:8080/'
           rules_file_name: '.zap/rules.tsv'
-          fail_action: true # Enforces gate by blocking pull requests if severe active vulnerabilities are encountered
-          # Configuration file explicitly handles the spider exclusion pattern
-          config_file_name: '.zap/zap.conf'
-          # Command options now strictly handles the authentication cookie injection safely
-          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low"'
+          fail_action: true
+          # Instructs ZAP to load configuration properties strictly from the file asset
+          cmd_options: '-configfile /zap/wrk/.zap/zap.conf'
+
 
