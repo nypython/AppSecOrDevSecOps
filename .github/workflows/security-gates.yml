@@ -140,6 +140,6 @@ jobs:
           rules_file_name: '.zap/rules.tsv'
           fail_action: true
           # Instructs ZAP to load configuration properties strictly from the file asset
-          cmd_options: '-configfile /zap/wrk/.zap/zap.conf'
+          cmd_options: '-g /zap/wrk/.zap/zap.conf'
 
 
