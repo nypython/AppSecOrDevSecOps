@@ -136,5 +136,6 @@ jobs:
           target: 'http://localhost:8080/'
           rules_file_name: '.zap/rules.tsv'
           fail_action: true # Enforces gate by blocking pull requests if severe active vulnerabilities are encountered
-          # Command options instruct ZAP spidering engines to append credentials to every automated payload request
-          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low" -config spider.excludePattern=.*/logout\\.php.*'
+          # Uses duplicate -z flags to bypass the command-line parser bug with the -config flag
+          cmd_options: '-z "Requestor.Header=Cookie: PHPSESSID=${{ env.PHPSESSID }}; security=low" -z "spider.excludePattern=.*/logout\.php.*"'
+
