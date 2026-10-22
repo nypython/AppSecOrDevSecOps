@@ -152,8 +152,8 @@ jobs:
         with:
           name: zap-security-reports
           path: |
-            reports_html.html
-            reports_md.md
-            reports_json.json
+            report_html.html
+            report_md.md
+            report_json.json
 
 
