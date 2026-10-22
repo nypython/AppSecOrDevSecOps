@@ -144,8 +144,8 @@ jobs:
           allow_issue_writing: true
           # Injects the active session cookie into ZAP's authenticated context for deeper scanning
           # Instructs ZAP to load configuration properties strictly from the file asset
-          cmd_options: '-g /zap/wrk/.zap/zap.conf'
-          artifact_name: ''
+          cmd_options: '-g /zap/wrk/.zap/zap.conf -J report_json.json -w report_md.md -r report_html.html'
+          
 
       - name: Upload Security Reports Natively
         uses: actions/upload-artifact@v4
