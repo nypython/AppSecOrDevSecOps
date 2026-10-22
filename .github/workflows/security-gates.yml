@@ -145,7 +145,7 @@ jobs:
             -J report_json.json \
             -w report_md.md \
             -r report_html.html \
-            -g /zap/wrk/.zap/zap.conf || echo "Scan completed with alerts or errors" -t'
+            -g /zap/wrk/.zap/zap.conf || echo "Scan completed with alerts or errors"
 
       - name: Upload Security Reports Natively
         uses: actions/upload-artifact@v4
