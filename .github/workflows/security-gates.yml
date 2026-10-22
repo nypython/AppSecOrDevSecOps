@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write # Grants permission to create issues for vulnerabilities discovered during the pipeline
   security-events: write # Mandatory permission to ingest SARIF results into GitHub ASPM (Security Tab)
   actions: read
 
